@@ -1,28 +1,38 @@
-import requests
-import io
-import urllib.parse
+import torch
+from diffusers import StableDiffusionImg2ImgPipeline
 from PIL import Image
 
+# ----------------------------
+# Load model once
+# ----------------------------
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+    "runwayml/stable-diffusion-v1-5",
+    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+    safety_checker=None
+)
+
+pipe = pipe.to(device)
+
+# ----------------------------
+# AI → Human enhancement
+# ----------------------------
 def make_real(uploaded_image):
-    try:
-        # 1. قراءة الصورة المرفوعة
-        uploaded_image.seek(0)
-        
-        # 2. وصف برميجي ذكي ومكثف يجبر الذكاء الاصطناعي الخارجي على تحويل ملامح الأنمي إلى بشر حقيقي
-        prompt = "A professional ultra-realistic 8k photo of a real human person matching the uploaded character, highly detailed skin texture, natural portrait photography, shot on 35mm lens, corporate headshot, realistic eyes, cinematic lighting"
-        
-        encoded_prompt = urllib.parse.quote(prompt)
-        
-        # 3. استخدام محرك Pollinations السريع والمتطور للـ Image-to-Image مجاناً وبدون أي تعليق
-        image_url = f"https://pollinations.ai{encoded_prompt}?width=512&height=512&nologo=true&enhance=true&seed=42"
-        
-        response = requests.get(image_url, timeout=30)
-        
-        if response.status_code == 200:
-            return Image.open(io.BytesIO(response.content))
-        else:
-            uploaded_image.seek(0)
-            return Image.open(uploaded_image)
-    except:
-        uploaded_image.seek(0)
-        return Image.open(uploaded_image)
+
+    image = Image.open(uploaded_image).convert("RGB")
+    image = image.resize((512, 512))
+
+    prompt = (
+        "a real human face, ultra realistic, natural skin texture, "
+        "professional portrait photography, high detail, 8k"
+    )
+
+    result = pipe(
+        prompt=prompt,
+        image=image,
+        strength=0.65,
+        guidance_scale=7.5
+    ).images[0]
+
+    return result
