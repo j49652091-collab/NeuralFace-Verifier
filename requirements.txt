@@ -9,6 +9,6 @@ timm
 torchvision
 torch
 scikit-image
+mtcnn
 deepface
 tf-keras
-mtcnn
