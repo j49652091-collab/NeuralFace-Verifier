@@ -3,12 +3,7 @@ Pillow
 numpy
 scikit-learn
 opencv-python-headless
-transformers
-accelerate
-timm
-torchvision
-torch
 scikit-image
-mtcnn
-deepface
-tf-keras
+torch
+torchvision
+
