@@ -7,9 +7,3 @@ scikit-image
 torch
 torchvision
 requests
-urllib3
-diffusers
-transformers
-accelerate
-safetensors
-scipy
