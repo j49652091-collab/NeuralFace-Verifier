@@ -6,4 +6,6 @@ opencv-python-headless
 scikit-image
 torch
 torchvision
-requests
+diffusers
+accelerate
+transformers
