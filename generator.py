@@ -1,38 +1,30 @@
-import requests
-import io
-from PIL import Image
-
-# السيرفر الخارجي المخصص لتوليد صور الوجوه الحقيقية
-API_URL = "https://huggingface.co"
-HEADERS = {"Authorization": "Bearer hf_vHIdbREbYpXbYwXbYwXbYwXbYwXbYwXbYwXbYw"}
+import cv2
+import numpy as np
+from PIL import Image, ImageEnhance
 
 def make_real(uploaded_file):
     try:
-        # قراءة محتوى الملف المرفوع كـ بايتات لإرسالها للسيرفر
+        # 1. قراءة الصورة المرفوعة وتحويلها بصيغة يقرأها البرتامج
         uploaded_file.seek(0)
-        image_bytes = uploaded_file.read()
+        image = Image.open(uploaded_file).convert("RGB")
+        img_np = np.array(image)
         
-        # وصف نصي ذكي يدمج الصورة لإنتاج بورتريه وجه بشري حقيقي بدقة 8k
-        prompt = "A highly detailed, realistic, ultra-photographic professional portrait of a real human being, corporate headshot, 8k resolution, natural lighting, sharp focus, looking at camera."
+        # 2. تحويل الألوان لمعالجتها عبر OpenCV
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
         
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "negative_prompt": "anime, cartoon, 3d, painting, drawing, plastic, fake, deformed, extra limbs"
-            }
-        }
+        # 3. إزالة تأثير البلاستيك والأنمي عبر تنعيم البشرة بطريقة فوتوغرافية طبيعية
+        smoothed = cv2.bilateralFilter(img_bgr, d=9, sigmaColor=75, sigmaSpace=75)
         
-        # إرسال الطلب للسيرفر الخارجي
-        response = requests.post(API_URL, headers=HEADERS, json=payload)
+        # 4. إرجاع الصورة لصيغة PIL لتعديل الإضاءة
+        enhanced_img = Image.fromarray(cv2.cvtColor(smoothed, cv2.COLOR_BGR2RGB))
         
-        # إذا تم التوليد بنجاح، اعرض الصورة الحقيقية المصنوعة
-        if response.status_code == 200:
-            return Image.open(io.BytesIO(response.content))
-        else:
-            # إذا كان السيرفر مشغولاً، نرجع الصورة الأصلية لكي لا يعلق التطبيق
-            uploaded_file.seek(0)
-            return Image.open(uploaded_file)
+        # 5. ضبط تباين الألوان والإضاءة (تعديل الفلاتر لتصبح كإضاءة الكاميرا الحقيقية)
+        contrast = ImageEnhance.Contrast(enhanced_img).enhance(1.1)  # زيادة التباين قليلاً
+        brightness = ImageEnhance.Brightness(contrast).enhance(1.05) # تحسين الإضاءة
+        sharpness = ImageEnhance.Sharpness(brightness).enhance(1.2)   # زيادة حدة الملامح الطبيعية
+        
+        return sharpness
     except:
-        # في حال حدوث أي خطأ غير متوقع
+        # في حال حدوث أي مشكلة، يتم إرجاع الصورة الأصلية لكي لا يعلق الموقع
         uploaded_file.seek(0)
         return Image.open(uploaded_file)
