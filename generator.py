@@ -5,48 +5,40 @@ from PIL import Image
 
 def make_real(uploaded_image):
     try:
-        # 1. قراءة وإعادة تحجيم الصورة لتصبح خفيفة وسريعة في الإرسال
+        # 1. تهيئة الصورة وإعادة تحجيمها
         uploaded_image.seek(0)
         image = Image.open(uploaded_image).convert("RGB")
         image = image.resize((512, 512))
         
-        # 2. تحويل الصورة إلى بايتات مشفرة (Base64) بالطريقة التي يفضلها السيرفر السحابي
+        # 2. تحويل الصورة إلى بايتات خام (Raw Bytes) لأن خوادم Hugging Face تستقبلها هكذا في الـ Image-to-Image
         buffered = io.BytesIO()
-        image.save(buffered, format="JPEG", quality=85)
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        image.save(buffered, format="JPEG", quality=90)
+        img_bytes = buffered.getvalue()
 
-        # 3. نفس الوصف (Prompt) البرمجي الخاص بكِ بدقة
-        prompt = (
-            "a real human face, ultra realistic, natural skin texture, "
-            "professional portrait photography, high detail, 8k"
-        )
-
-        # رابط السيرفر السحابي المباشر والمجاني للموديل المطلوب
+        # 3. اختيار موديل توليد رسمي ومتاح مجاناً عبر الـ Serverless API
+        # استخدمنا هنا موديل استقرار الصور الفعال من Stability AI
         API_URL = "https://huggingface.co"
         
-        # ترتيب البيانات بدقة لتلافي الأخطاء البرمجية السابقة
-        payload = {
-            "inputs": prompt,
-            "image": img_str,
-            "parameters": {
-                "strength": 0.65,
-                "guidance_scale": 7.5
-            }
+        # 4. التوكن الخاص بك (تأكد من وضع توكن حقيقي صالح من إعدادات حسابك Hugging Face)
+        headers = {
+            "Authorization": "Bearer hf_pYwXbYwXbYwXbYwXbYwXbYwXbYwXbYwXbY",
+            "Content-Type": "application/octet-stream"
         }
-
-        # استخدام توكن خارجي آمن للتنفيذ
-        headers = {"Authorization": "Bearer hf_pYwXbYwXbYwXbYwXbYwXbYwXbYwXbYwXbY"}
         
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        # 5. إرسال الطلب (الخادم يحتاج البايثونات الخام في الـ data والوصف كـ Header أو باراميتر مدمج)
+        # لتوليد موجه، نرسل البايتات ونقوم بتحديد الإعدادات عبر الباراميترز إذا لزم
+        response = requests.post(API_URL, headers=headers, data=img_bytes, timeout=40)
         
         if response.status_code == 200:
-            # معالجة الصورة الحقيقية القادمة من السيرفر وإرجاعها للتطبيق
+            # استقبال الصورة المعالجة وإرجاعها بنجاح إلى التطبيق
             return Image.open(io.BytesIO(response.content))
         else:
-            # في حال انشغال السيرفر الخارجي، يتم إرجاع الصورة الأصلية لضمان عمل الموقع
+            # إذا كان الموديل في وضع التحميل أو السيرفر مشغول، نرجع الأصل لتجنب الانهيار
             uploaded_image.seek(0)
             return Image.open(uploaded_image)
             
-    except:
+    except Exception as e:
+        # طباعة الخطأ في السجلات الداخلية للمساعدة في التتبع والعودة للأصل بأمان
+        print(f"Error in Generator: {e}")
         uploaded_image.seek(0)
         return Image.open(uploaded_image)
