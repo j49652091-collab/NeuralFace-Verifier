@@ -1,45 +1,125 @@
-import torch
-import torchvision.models as models
-import torchvision.transforms as transforms
-from PIL import Image
+from deepface import DeepFace
 import numpy as np
-
-# استدعاء نموذج خفيف ومثبت مسبقاً بديل لـ Facenet
-model = models.mobilenet_v3_small(pretrained=True)
-model.eval()
-
-# تجهيز وتحويل الصور لتناسب نموذج الذكاء الاصطناعي
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+import hashlib
 
 # ----------------------------
-# Extract face embedding
+# Extract Face Embedding
 # ----------------------------
-def get_embedding(image_path):
+def get_face_embedding(image_path):
+
     try:
-        image = Image.open(image_path).convert('RGB')
-        tensor = transform(image).unsqueeze(0)
-        with torch.no_grad():
-            # استخراج ميزات الوجه (Embedding)
-            embedding = model(tensor).flatten().numpy()
-        return embedding
-    except:
-        return np.zeros(576) # مصفوفة صفرية في حال حدوث خطأ
+
+        embedding = DeepFace.represent(
+            img_path=image_path,
+            model_name="Facenet",
+            enforce_detection=False
+        )
+
+        return np.array(
+            embedding[0]["embedding"]
+        )
+
+    except Exception as e:
+
+        print("Embedding Error:", e)
+
+        return None
+
+
+# ----------------------------
+# Generate Digital Signature
+# ----------------------------
+def create_digital_signature(embedding):
+
+    if embedding is None:
+        return "No Face Signature"
+
+    # normalize vector
+    normalized = embedding / np.linalg.norm(
+        embedding
+    )
+
+    # vector → text
+    embedding_text = ",".join(
+        [str(round(x,5))
+         for x in normalized]
+    )
+
+    # SHA256 hash
+    signature = hashlib.sha256(
+        embedding_text.encode()
+    ).hexdigest()
+
+    return signature
+
 
 # ----------------------------
 # Compare two faces
 # ----------------------------
 def compare_faces(img1, img2):
-    emb1 = get_embedding(img1)
-    emb2 = get_embedding(img2)
 
-    # حساب المسافة الإقليدية تماماً كما في كودك الأصلي
-    distance = np.linalg.norm(emb1 - emb2)
+    emb1 = get_face_embedding(img1)
+    emb2 = get_face_embedding(img2)
 
-    # تحويل المسافة إلى نسبة مئوية للتشابه
-    similarity = max(0, 1 - distance / 100)
+    if emb1 is None or emb2 is None:
 
-    return round(similarity * 100, 2)
+        return {
+            "similarity":0,
+            "signature":"No Face Found",
+            "status":"Face Detection Failed"
+        }
+
+    # cosine similarity
+    similarity = np.dot(
+        emb1,
+        emb2
+    ) / (
+
+        np.linalg.norm(emb1)
+        *
+        np.linalg.norm(emb2)
+
+    )
+
+    similarity = round(
+        similarity*100,
+        2
+    )
+
+    signature = create_digital_signature(
+        emb1
+    )
+
+    if similarity >=70:
+
+        status="Match Found"
+
+    else:
+
+        status="No Match"
+
+    return {
+
+        "similarity":similarity,
+
+        "signature":signature,
+
+        "status":status
+
+    }
+
+
+# ----------------------------
+# Generate single face signature
+# ----------------------------
+def generate_face_signature(image_path):
+
+    embedding = get_face_embedding(
+        image_path
+    )
+
+    signature = create_digital_signature(
+        embedding
+    )
+
+    return signature
