@@ -1,37 +1,32 @@
 body{
-background-color:#0a0f1f;
+background-color:#030712;
 color:white;
 }
 
 .stApp{
 background:linear-gradient(
 135deg,
-#030712,
-#0f172a,
-#111827
+#020617,
+#111827,
+#0f172a
 );
 }
 
 h1,h2,h3{
+
 color:#00ffcc;
-text-shadow:0px 0px 15px #00ffcc;
-}
 
-div[data-testid="stMetric"]{
-background:#111827;
-padding:15px;
-border-radius:15px;
-border:1px solid #00ffcc;
-box-shadow:0 0 20px rgba(0,255,200,.2);
-}
-
-section[data-testid="stSidebar"]{
-background:#020617;
+text-shadow:
+0px 0px 10px #00ffcc;
 }
 
 .stButton button{
+
 background:#00ffcc;
+
 color:black;
+
 border-radius:10px;
+
 font-weight:bold;
 }
