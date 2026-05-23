@@ -1,22 +1,3 @@
-import subprocess
-import sys
-
-# خدعة برمجية لحذف النسخة المسببة للمشكلة وإجبار السيرفر على نسخة السحاب
-try:
-    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", "opencv-python", "opencv-contrib-python"])
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", "opencv-python-headless"])
-except Exception as e:
-    pass
-
-# الآن تبدأ استدعاءات الكود الخاص بك بشكل طبيعي تماماً
-import streamlit as st
-import tensorflow as tf
-# ... باقي الكود الخاص بك
-
-
-
-
-
 
 
 
