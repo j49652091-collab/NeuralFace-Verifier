@@ -1,9 +1,6 @@
 streamlit
-deepface
+streamlit-canvas
+opencv-python-headless
 tf-keras
-mtcnn
-opencv-python
-numpy
-Pillow
-scikit-image
-tensorflow
+deepface
+face_recognition
