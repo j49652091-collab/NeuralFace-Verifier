@@ -1,10 +1,4 @@
 streamlit
-Pillow
-numpy
-scikit-learn
 opencv-python-headless
-scikit-image
-torch
-torchvision
-requests
+tensorflow-cpu==2.13.0
 deepface
