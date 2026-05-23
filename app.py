@@ -1,3 +1,16 @@
+import subprocess
+import sys
+
+# تثبيت المكتبة برمجياً لتخطي قيود التثبيت السحابي
+try:
+    import deepface
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "deepface-sans-tf"])
+
+
+
+
+
 import streamlit as st
 import tempfile
 
